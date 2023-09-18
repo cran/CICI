@@ -1,0 +1,32 @@
+citHeader("To cite CICI in publications, please use:")
+
+vers <- paste("R package version", meta$Version)
+
+bibentry(bibtype="article",
+  author = c(as.person("Michael Schomaker"),
+                   as.person("Helen McIlleron"),
+                   as.person("Paolo Denti"),
+                   as.person("Ivan Diaz")
+                   ),
+  title = "Causal Inference for Continuous Multiple Time Point Interventions",
+  journal      = "arXiv eprints",
+  year         = "2023",
+  volume       = "https://arxiv.org/abs/2305.06645",
+  textVersion = paste("I) Michael Schomaker, Helen McIlleron, Paolo Denti, Ivan Diaz (2023).",
+        "Causal Inference for Continuous Multiple Time Point Interventions.",
+        "arXiv eprints: https://arxiv.org/abs/2305.06645"),
+)
+
+bibentry(bibtype="Manual",
+  title        = "{CICI}: Causal Inference for Continuous (Multiple Time Point) Interventions",
+  author       = "Michael Schomaker",
+  year = 2023,
+  note = vers,
+  textVersion  =
+  paste("II) Michael Schomaker (2023)",
+        "CICI: Causal Inference for Continuous (Multiple Time Point) Interventions.",
+        "URL: https://michaelschomaker.github.io/project/cici/.",
+        vers)
+)
+
+
