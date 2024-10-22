@@ -1,8 +1,8 @@
-d60f8f4ff2759b401db293f3f7c06ad9 *DESCRIPTION
+eca3b2d775f258520e09e7be53d8bedd *DESCRIPTION
 2082c4537666c944855945ebc6eb86c6 *NAMESPACE
 eec4281d3bb925550b591fe6dc263b1d *R/custom.measure.r
 351ce5e6ed959354275ad9e2c3293f73 *R/fit.updated.formulas.r
-8416c5688aec3d6d1c11d30762cca2e0 *R/gformula.r
+830b0f8a9207c6c4d6037ccd2ba41539 *R/gformula.r
 85782658cf37972037f23201d10d6ebc *R/helper.r
 b94e1e5a42c3ea584e64b9d613998bb5 *R/make.model.formulas.r
 f945c24ee3ad85418520ed610e92f2fd *R/mi.boot.r
@@ -13,7 +13,7 @@ d8d414d6ee9deeac1de8ad3cf49b310f *R/plot.gformula.r
 d32a668248200a28700bda107f7e14a5 *data/EFV.rda
 5867e0b019fad0530474954eceabf0b6 *data/EFVfull.rda
 ce6a94e46f4017c6ffc869fe345f3b20 *inst/CITATION
-65f391bdfd800ddc95ad0ec661233faa *man/CICI-package.Rd
+3bceac329d4e5e3bec109f7c4ba935ae *man/CICI-package.Rd
 2cad38185538f99d87b46ff201f11418 *man/EFV.Rd
 177a78e3b044d02297f77e94f16efd4e *man/EFVfull.Rd
 da35affb6fbaa56b9410728431cb5f92 *man/custom.measure.Rd

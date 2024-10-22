@@ -17,6 +17,10 @@
 # seed = NULL
 ###
 # optional: plot Strategy names for custom interventions at bottom?
+# 2) fix problem with matrix interventions (Katy)
+# 3) general individual interventions
+# 4) test categorical interventions, including plot function; double check Enzos Beispiel (see cici_categirical_enzo unter Tests/Examples) 
+# 5) make.model.formulas -> Intervention must stay
 # 6) calc.support for custom interventions: does not make sense. Not allow?
 # 7) natural bounds 
 # 8) shift 
@@ -196,7 +200,7 @@ all.Anodes  <-   which(colnames(mydat)%in%c(Anodes))
 all.Cnodes  <-   which(colnames(mydat)%in%c(Cnodes))
 gdata[,which(colnames(mydat)%in%first.treatment):ncol(gdata)] <- NA
 if(i.type!="natural"){
-gdata[,all.Anodes] <-   (store.results[i,2:(n.a+1)])[is.na(store.results[i,2:(n.a+1)])==F]
+gdata[,all.Anodes] <-   matrix(rep((store.results[i,2:(n.a+1)])[is.na(store.results[i,2:(n.a+1)])==F], nrow(mydat)), nrow=nrow(mydat), byrow=T)
 gdata[,all.Cnodes] <-    cbar}
 
 # Step 3: simulate
@@ -290,7 +294,7 @@ boots <- foreach(b = 1:B) %:%
                 all.Cnodes  <-   which(colnames(mydat)%in%c(Cnodes))
                 gdata[,which(colnames(mydat)%in%first.treatment):ncol(gdata)] <- NA
                 if(i.type!="natural"){
-                gdata[,all.Anodes] <-   (store.results[i,2:(n.t+1)])[is.na(store.results[i,2:(n.t+1)])==F]
+                gdata[,all.Anodes] <-   matrix(rep((store.results[i,2:(n.a+1)])[is.na(store.results[i,2:(n.a+1)])==F], nrow(mydat)), nrow=nrow(mydat), byrow=T)
                 gdata[,all.Cnodes] <-    cbar}
                 # 3
                 sim.nodes <- c(Lnodes,Ynodes); if(i.type=="natural"){sim.nodes <- c(sim.nodes,Anodes,Cnodes)}
@@ -439,12 +443,6 @@ if(i.type!="natural"){obs.data<-NULL}
 # Step 6: calculate support if desired
 if(calc.support==TRUE){
 if(n.int<6 & n.int>2 & verbose==TRUE){cat(paste("Note: you have specified only",n.int,"interventions. The reported support diagnostics may not be reliable here. \n"))}
-# if(length(Ynodes)==length(Anodes)){
-# store.results$crude_weights <- c(support$crude_weights)
-# store.results$cond_weights <- c(support$cond_weights)}else{
-# store.results$crude_weights <- c(support$crude_weights[,updat.index2])
-# store.results$cond_weights <- c(support$cond_weights[,updat.index2])
-# }
 diagn <- list(crude_support=support$crude_support,conditional_support=support$cond_support)
 cn <- paste("a",1:n.a ,sep=""); if(i.type=="standard"){rn <- as.character(abar)}else{rn <- paste("Strategy",1:nrow(abar))}
 diagn <- lapply(diagn,as.data.frame)
