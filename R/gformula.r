@@ -16,12 +16,8 @@
 # prog=NULL
 # seed = NULL
 ###
-# optional: plot Strategy names for custom interventions at bottom?
-# 2) fix problem with matrix interventions (Katy)
-# 3) general individual interventions
 # 4) test categorical interventions, including plot function; double check Enzos Beispiel (see cici_categirical_enzo unter Tests/Examples) 
-# 5) make.model.formulas -> Intervention must stay
-# 6) calc.support for custom interventions: does not make sense. Not allow?
+
 # 7) natural bounds 
 # 8) shift 
 # 9) SACE ; and competing() and revisit definitions of cbar
@@ -62,7 +58,7 @@ if(any(c(Ynodes,Lnodes,Anodes,Cnodes)%in%colnames(X)==FALSE)){stop(paste("You ha
              paste(c(Ynodes,Lnodes,Anodes,Cnodes)[c(Ynodes,Lnodes,Anodes,Cnodes)%in%colnames(X)==FALSE],collapse=" ") ,"\n"))}
 if(any(sapply(X,is.ordered))){stop("Ordered variables are not allowed")}
 if(any(abar=="natural") & calc.support==TRUE){calc.support<-FALSE; if(verbose==TRUE){cat("Note: no support can be calculated under natural interventions.\n")}}
-if(is.matrix(abar)==FALSE & (is.vector(abar)&is.numeric(abar))==FALSE & any(abar=="natural")==FALSE){stop("'abar' not correctly specified. Type ?gformula for help.")}
+if(is.matrix(abar)==FALSE & (is.vector(abar)&is.numeric(abar))==FALSE & any(abar=="natural")==FALSE & (is.list(abar) & all(dim(abar[[1]])==c(nrow(X), length(Anodes))))==FALSE ){stop("'abar' not correctly specified. Type ?gformula for help.")}
 if(is.logical(survivalY)==FALSE){stop("survivalY needs to be TRUE or FALSE")}
 if(survivalY==TRUE){if(verbose==TRUE){if(is.null(Cnodes)){cat("Warning: you indicate that you have survival data (survivalY=T), but you have no Cnodes specified. \n")}}}
 if(is.character(Yform)==FALSE){stop("Yform needs to be a character vector")}
@@ -105,10 +101,12 @@ n.a <- length(Anodes); n.t <- length(Ynodes); n.l <-length(Lnodes); time.points 
 if(is.matrix(abar)==TRUE){interventions <- do.call(rbind, replicate(n.t, abar, simplify=FALSE)); i.type <- "custom"}else{
                             if(is.vector(abar)){interventions <- do.call(rbind, replicate(n.t, matrix(rep(abar,n.a),ncol=n.a), simplify=FALSE)); i.type<-"standard"}
                             if(any(abar=="natural")){interventions <- matrix(c(rep("natural",n.a),rep("observed",n.a),rep("difference",n.a)),ncol=n.a,byrow=T); i.type="natural"}
-                            }
+                            if(is.list(abar)){interventions <- do.call(rbind,replicate(n.t,do.call(rbind,lapply(lapply(abar,colnames),as.numeric)),simplify=FALSE)) ; i.type="individual"}                          
+  }
 if(i.type!="natural"){n.int <- dim(interventions)[1]/n.t}else{n.int <- 2}
-if(i.type=="natural" & calc.support==TRUE){calc.support<-FALSE; if(verbose==TRUE){cat("Note: For natural interventions no support is calculated \n")}}
 if(is.matrix(cbar)==FALSE){if(cbar=="uncensored"){cbar <- matrix(0,nrow=nrow(X),ncol=length(Cnodes))}}
+if(i.type=="custom" & calc.support==TRUE){calc.support<-FALSE; if(verbose==TRUE){cat("Note: no support can be calculated for custom intervention strategies.\n")}}
+if(i.type=="individual" & calc.support==TRUE){calc.support<-FALSE; if(verbose==TRUE){cat("Note: no support can be calculated for individual intervention strategies.\n")}}
 
 
 store.results           <- as.data.frame(matrix(NA,nrow=(n.t)*n.int+as.numeric(i.type=="natural")*n.t,ncol=1+n.a+1))
@@ -144,6 +142,7 @@ if(is.null(prog)==FALSE){write(matrix("started with g-formula calculations in or
 
 # Prepare support measures, if relevant
 if(calc.support==TRUE){
+  if(n.int < 3){calc.support<-FALSE; if(verbose==TRUE){cat(paste("Note: you have specified only",n.int,"interventions. The support diagnostics will thus not be calculated. \n"))}}
   support <- calculate.support(dat=X,A=Anodes,intervention=interventions[store.results$time==1,],...)
   updat.index2 <- unlist(lapply(apply(t(outer(which(colnames(X)%in%Anodes), which(colnames(X)%in%Ynodes), "<")),1,which),max))   
 }
@@ -200,8 +199,11 @@ all.Anodes  <-   which(colnames(mydat)%in%c(Anodes))
 all.Cnodes  <-   which(colnames(mydat)%in%c(Cnodes))
 gdata[,which(colnames(mydat)%in%first.treatment):ncol(gdata)] <- NA
 if(i.type!="natural"){
-gdata[,all.Anodes] <-   matrix(rep((store.results[i,2:(n.a+1)])[is.na(store.results[i,2:(n.a+1)])==F], nrow(mydat)), nrow=nrow(mydat), byrow=T)
-gdata[,all.Cnodes] <-    cbar}
+  if(i.type!="individual"){replacement <- matrix(rep((store.results[i,2:(n.a+1)])[is.na(store.results[i,2:(n.a+1)])==F], nrow(mydat)), nrow=nrow(mydat), byrow=T)}else{
+                           replacement <- abar[[which(sapply(lapply(lapply(abar, colnames), as.numeric), identical, as.vector(unname(unlist(store.results[i,2:(n.a+1)]))))) ]]  }
+                           if(length(all.Anodes)==1){replacement<-as.vector(replacement)}
+  gdata[,all.Anodes] <-    replacement
+  gdata[,all.Cnodes] <-    cbar}
 
 # Step 3: simulate
 sim.nodes <- c(Lnodes,Ynodes); if(i.type=="natural"){sim.nodes <- c(sim.nodes,Anodes,Cnodes)}
@@ -294,8 +296,11 @@ boots <- foreach(b = 1:B) %:%
                 all.Cnodes  <-   which(colnames(mydat)%in%c(Cnodes))
                 gdata[,which(colnames(mydat)%in%first.treatment):ncol(gdata)] <- NA
                 if(i.type!="natural"){
-                gdata[,all.Anodes] <-   matrix(rep((store.results[i,2:(n.a+1)])[is.na(store.results[i,2:(n.a+1)])==F], nrow(mydat)), nrow=nrow(mydat), byrow=T)
-                gdata[,all.Cnodes] <-    cbar}
+                  if(i.type!="individual"){replacement <- matrix(rep((store.results[i,2:(n.a+1)])[is.na(store.results[i,2:(n.a+1)])==F], nrow(mydat)), nrow=nrow(mydat), byrow=T)}else{
+                                           replacement <- abar[[which(sapply(lapply(lapply(abar, colnames), as.numeric), identical, as.vector(unname(unlist(store.results[i,2:(n.a+1)]))))) ]]  }
+                                           if(length(all.Anodes)==1){replacement<-as.vector(replacement)}
+                  gdata[,all.Anodes] <-    replacement
+                  gdata[,all.Cnodes] <-    cbar}
                 # 3
                 sim.nodes <- c(Lnodes,Ynodes); if(i.type=="natural"){sim.nodes <- c(sim.nodes,Anodes,Cnodes)}
                 model.order <- paste("m",i,"_",colnames(mydat)[colnames(mydat)%in%sim.nodes],sep="")

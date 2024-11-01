@@ -18,12 +18,16 @@ if(all(gobject$setup$abar%in%c(0,1))){bin.int=TRUE}else{bin.int <- FALSE}
 n.t <- gobject$setup$n.t
 if(bin.int==TRUE & n.t==1){gobject$setup$i.type<-"standard"; msm.method<-"none"}
 if(bin.int==TRUE & n.t>1){gobject$setup$i.type<-"custom"}
+if(gobject$setup$i.type=="individual"){
+  custom <- any(unlist(lapply(lapply(apply(gobject$results[, grep("^a", names(gobject$results)), drop=F],1,unique),na.omit),length))>1 )
+  if(custom==TRUE){gobject$setup$i.type<-"custom"}else{gobject$setup$i.type<-"standard"}
+  }
 if(survival==T){gobject$setup$i.type<-"custom"}
   
 results <- gobject$results
 if(is.null(time.points)==FALSE){results<-results[results$time%in%time.points,]}
 mycolors <- c("black", "orangered3","dodgerblue4", "springgreen3","gold","greenyellow","purple",sample(rainbow(25)))
-#if(is.null(weight)==FALSE){if(weight=="crude"){weight<-results$crude_weights}else{if(weight=="cond"){weight<-results$cond_weights}}}
+
 
 #####
 if(gobject$setup$i.type=="standard"){
@@ -118,7 +122,7 @@ gg3 <- gg2 + scale_color_manual(values = cols) +  scale_fill_manual(values = col
        scale_y_continuous(expression(psi)) +
        ggtitle("Effect of Strategies over Time")  +
        theme(axis.title.x = element_text(size=13), axis.text.x = element_text(size=13),axis.title.y = element_text(size=13, angle = 90),
-            axis.text.y = element_text(size=13), legend.text =  element_text(size=13), legend.title = element_text(size=13, face = "bold", hjust = 0),legend.position =   "right") +
+            axis.text.y = element_text(size=13), legend.text =  element_text(size=10), legend.title = element_text(size=13, face = "bold", hjust = 0),legend.position =   "right") +
        guides(col=guide_legend(title="Strategies"), fill="none")
 }
 

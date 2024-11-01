@@ -3,7 +3,7 @@ if(is.null(fun)){stop("'fun' need to be specified")}
 if(is.function(fun)==FALSE){stop("'fun' needs to be a function")}
 if(is.null(X$simulated.data)){stop("Set 'ret=TRUE' in gformula() to work with custom measures.")}
 if(verbose==TRUE){if(X$setup$i.type=="custom"){cat("Note: you chose custom interventions. \n 'custom.measure' asssumes that the intervention values at the first time point (time=1) are not identical.\n\n")}}
-if(X$setup$measure=="custom"){stop("You can't apply 'custom measure' on an Xect onto which you already applied 'custom measure'.")}
+if(X$setup$measure=="custom"){stop("You can't apply 'custom measure' on an X onto which you already applied 'custom measure'.")}
 if(X$setup$B==0 & with.se==T){stop("Standard error can only be calculated if B>0")}
 if(X$setup$B>0){if(X$setup$B!=(length(X$simulated.data)-1)){X$setup$B<- (length(X$simulated.data)-1) }}
 sdata <- X$simulated.data
@@ -13,6 +13,13 @@ if(length(grep("mult",X$setup$fams))>0 & X$setup$i.type=="natural"){
 if(is.null(sum(sapply(odata[[1]],is.factor))>0)==FALSE){if(sum(sapply(odata[[1]],is.factor))>0){
 for(b in 1:(X$setup$B+1)){odata[[b]][,sapply(odata[[b]],is.factor)] <- apply(sapply(( subset(odata[[b]],select=sapply(odata[[b]],is.factor))),as.character),2,as.numeric)}
 }}
+}
+if(X$setup$i.type=="individual"){
+  custom <- any(unlist(lapply(lapply(apply(X$results[, grep("^a", names(X$results)), drop=F],1,unique),na.omit),length))>1 )
+  if(custom==TRUE){X$setup$i.type<-"custom"}else{X$setup$i.type<-"standard"}
+  if(custom==TRUE){X$setup$abar <- do.call(rbind,lapply(lapply(X$setup$abar,colnames),as.numeric))}else{
+                   X$setup$abar <- do.call(rbind,lapply(lapply(X$setup$abar,colnames),as.numeric))[,1]
+  }
 }
 
 if(X$setup$i.type=="standard"){
