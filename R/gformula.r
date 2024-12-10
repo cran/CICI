@@ -1,23 +1,9 @@
-# X <- Odat[,-1]
-# Lnodes  <- colnames(X)[sort(c(grep("L1_",colnames(X)),grep("L2_",colnames(X))))]
-# Ynodes  <- colnames(X)[sort(c(grep("Y_",colnames(X))))]
-# Anodes  <- colnames(X)[sort(c(grep("A_",colnames(X))))]
-# Cnodes  <- colnames(X)[sort(c(grep("C_",colnames(X))))]
-# survivalY <- FALSE
-# a.min <- round(min(X[,grep("A_",colnames(X))],na.rm=T)-1,digits=0);a.max <- round(max(X[,grep("A_",colnames(X))],na.rm=T)+1,digits=0);n.int<-10
-# abar <- seq(a.min,a.max,length.out=n.int) # could also be a matrix of size n.int times t
-# cbar <- "uncensored"
-# Yform <- Aform <- Cform <- Lform <-  "GLM"
-# calc.support = FALSE
-# B = 0
-# verbose=TRUE
-# ret=F
-# ncores=1
-# prog=NULL
-# seed = NULL
 ###
-# 4) test categorical interventions, including plot function; double check Enzos Beispiel (see cici_categirical_enzo unter Tests/Examples) 
-
+# 0) Update references
+# 1) should last variable be a Ynode?
+# 2) plor.gformula -> L_1 not allowed if not there
+# 3) binary and categorical intervention: function to calculate differences, risks etc. (combine with compete()?)
+# 4) maybe test mixed interventions?
 # 7) natural bounds 
 # 8) shift 
 # 9) SACE ; and competing() and revisit definitions of cbar
@@ -81,20 +67,29 @@ if(any(model.families=="binomial")){bin.problem <- !sapply(subset(X,select=(mode
 }
 if(any(substr(model.families,1,4)=="mult")){fac.problem <- !sapply(subset(X,select=(substr(model.families,1,4)=="mult")), right.coding)
     if(any(fac.problem)){if(verbose==TRUE){cat(paste("Categorical variables have been recoded:",paste(names(fac.problem)[fac.problem],collapse=","),"\n"))}
-    X[,names(fac.problem)[fac.problem]] <- data.frame(sapply(subset(X,select=names(fac.problem)[fac.problem]),factor.to.numeric,verb=verbose)) }
+    facind <- which(colnames(X)%in%names(fac.problem)[fac.problem]); for(k in facind){X[,k]<-recode_to_factor(X[,k],verb=verbose)} 
+    }
 }
+if(any(substr(model.families[which(colnames(X)%in%Anodes)],1,4)=="mult")){
+  catint <- TRUE 
+  catind <- which(colnames(X)%in%Anodes)[which(colnames(X)%in%Anodes)%in%which(substr(model.families,1,4)=="mult")]
+  if(is.factor(abar[[1]])){stop("abar is not allowed to be a factor")} 
+    if(is.list(abar)==FALSE){
+      if(max(abar) > (max(unlist(lapply(lapply(X[which(colnames(X)%in%Anodes)],levels),length)))-1) | (min(abar)<0) | (!all(is.wholenumber(abar)))){
+          stop(paste("for categorical interventions, 'abar' can only contain integers between 0 and", (max(unlist(lapply(lapply(X[which(colnames(X)%in%Anodes)],levels),length)))-1)))
+      }}else{if(verbose==TRUE){cat("Note: No control check for individual interventions on factor variables are done \n Make sure your setup is correct. \n ")}}
+  }else{catint<-FALSE}
+
 
 if(verbose==TRUE){
 if(any(abar=="natural")==FALSE){rel.nodes<-c(Ynodes,Lnodes)}else{rel.nodes<-c(Ynodes,Lnodes,Cnodes,Anodes)}
  gvar <- colnames(X)[model.families=="gaussian"]; bvar <- colnames(X)[model.families=="binomial"]; pvar <- colnames(X)[model.families=="poisson"]; mvar <- colnames(X)[substr(model.families,1,4)=="mult"] 
- cat(paste( "Note:\n linear regression used for:", paste(gvar[gvar%in%rel.nodes],"",collapse=""),"\n", "logistic regression used for:", paste(bvar[bvar%in%rel.nodes],"",collapse=""),"\n", 
+ cat(paste( "Note:\n Linear regression used for:", paste(gvar[gvar%in%rel.nodes],"",collapse=""),"\n", "Logistic regression used for:", paste(bvar[bvar%in%rel.nodes],"",collapse=""),"\n", 
  "Poisson regression used for:", paste(pvar[pvar%in%rel.nodes],"",collapse=""),"\n",  "Multinomial regression used for:", paste(mvar[mvar%in%rel.nodes],"",collapse=""),"\n"))
  baseline.var <-  colnames(X)[1:(max(1,which(colnames(X)%in%c((colnames(X)[colnames(X)%in%c(Anodes)])[1]))-1))]
   cat(paste(" Pre-Intervention variables are:",paste(baseline.var,collapse=" "),"\n\n"))
 }
 #
-
-
 
 ### matrices to store results ###
 n.a <- length(Anodes); n.t <- length(Ynodes); n.l <-length(Lnodes); time.points <- 1:n.t
@@ -102,12 +97,11 @@ if(is.matrix(abar)==TRUE){interventions <- do.call(rbind, replicate(n.t, abar, s
                             if(is.vector(abar)){interventions <- do.call(rbind, replicate(n.t, matrix(rep(abar,n.a),ncol=n.a), simplify=FALSE)); i.type<-"standard"}
                             if(any(abar=="natural")){interventions <- matrix(c(rep("natural",n.a),rep("observed",n.a),rep("difference",n.a)),ncol=n.a,byrow=T); i.type="natural"}
                             if(is.list(abar)){interventions <- do.call(rbind,replicate(n.t,do.call(rbind,lapply(lapply(abar,colnames),as.numeric)),simplify=FALSE)) ; i.type="individual"}                          
-  }
+}
 if(i.type!="natural"){n.int <- dim(interventions)[1]/n.t}else{n.int <- 2}
 if(is.matrix(cbar)==FALSE){if(cbar=="uncensored"){cbar <- matrix(0,nrow=nrow(X),ncol=length(Cnodes))}}
 if(i.type=="custom" & calc.support==TRUE){calc.support<-FALSE; if(verbose==TRUE){cat("Note: no support can be calculated for custom intervention strategies.\n")}}
 if(i.type=="individual" & calc.support==TRUE){calc.support<-FALSE; if(verbose==TRUE){cat("Note: no support can be calculated for individual intervention strategies.\n")}}
-
 
 store.results           <- as.data.frame(matrix(NA,nrow=(n.t)*n.int+as.numeric(i.type=="natural")*n.t,ncol=1+n.a+1))
 colnames(store.results) <- c("time",paste("a",1:n.a ,sep=""),"psi")
@@ -131,7 +125,7 @@ if(ncores>1){
      }
      if(verbose==TRUE){cat(paste("Note: You initialized parallel computation using",ncores,"threads...initializing cluster now... \n"))}
      cl <- parallel::makeCluster(ncores); doParallel::registerDoParallel(cl)
-     exp.var <- c("make.formula","calculate.support", "extract.families", "projection_linear", 
+     exp.var <- c("make.formula","calculate.support", "extract.families", "projection_linear", "factor.to.numeric", "recode_to_factor",
      "screen.cramersv","screen.glmnet.cramer", "censor", "adjust.sim.surv", "multiResultClass","multi.help","rmulti","rmean")
 }else{exp.var=NULL; foreach::registerDoSEQ()}
 
@@ -148,7 +142,6 @@ if(calc.support==TRUE){
 }
 
 ### ANALYSIS ###
-
 analysis <- foreach(i = int.index, .export=exp.var) %dorng% try({     
 
 mydat <- X
@@ -202,7 +195,7 @@ if(i.type!="natural"){
   if(i.type!="individual"){replacement <- matrix(rep((store.results[i,2:(n.a+1)])[is.na(store.results[i,2:(n.a+1)])==F], nrow(mydat)), nrow=nrow(mydat), byrow=T)}else{
                            replacement <- abar[[which(sapply(lapply(lapply(abar, colnames), as.numeric), identical, as.vector(unname(unlist(store.results[i,2:(n.a+1)]))))) ]]  }
                            if(length(all.Anodes)==1){replacement<-as.vector(replacement)}
-  gdata[,all.Anodes] <-    replacement
+  gdata[,all.Anodes] <-    replacement; if(catint==TRUE){for(k in catind){gdata[,k] <- factor(gdata[,k])}}
   gdata[,all.Cnodes] <-    cbar}
 
 # Step 3: simulate
@@ -218,12 +211,15 @@ if(sim.family=="gaussian"){gdata[,var.order[j]] <- rnorm(length(pm),mean=pm,sd=s
   if(sim.family=="binomial"){gdata[,var.order[j]] <- rbinom(n=length(pm),1,prob=pm)}else{
     if(sim.family=="poisson"){gdata[,var.order[j]]  <- rpois(n=length(pm),lambda=pm)}else{
       if(substr(sim.family,1,4)=="mult"){if(any(is.na(pm))){pm[is.na(pm)]<-1e08;if(verbose==TRUE){cat("\n Note: multinomial prediction led to missing values which were replaced by '0' \n")}}
-                                         gdata[,var.order[j]] <- rmulti(pm)}
+                                         gdata[,var.order[j]] <- recode_to_factor(rmulti(pm),verb=FALSE)}
     }}}
 }
+if(any(substr(model.families,1,4)=="mult")){ind <- which(substr(model.families,1,4)=="mult")
+                                            gdata[ind] <- lapply(lapply(gdata[ind],as.character),as.numeric)  }
+
 if(is.null(Cnodes)==FALSE){gdata <- t(apply(gdata,1,censor,C.index=which(colnames(X)%in%Cnodes)))}
 if(survivalY==TRUE){gdata <- t(apply(gdata,1,censor,C.index=which(colnames(X)%in%Ynodes)))
-                   gdata<-adjust.sim.surv(gdata,Yn=Ynodes)}
+                    gdata <- adjust.sim.surv(gdata,Yn=Ynodes)}
 
 # Step 4: estimate psi
 if(i.type!="natural"){res.nodes<-c(Ynodes)}else{res.nodes<-c(Ynodes,Lnodes)}
@@ -265,7 +261,7 @@ boots <- foreach(b = 1:B) %:%
                 for(j in 1:n.L.models)try({
                 L.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.L.Ynodes[j]))))
                 assign(model.L.names[j],mgcv::gam(make.formula(L.data,approach=Lform,index=j,fam=model.L.families[j]),data=L.data,family=model.L.families[j],drop.unused.levels=FALSE))   
-                },silent=TRUE)   # what if Lnodes=NULL?
+                },silent=TRUE)  
                 for(j in 1:n.Y.models)try({
                 Y.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.Y.Ynodes[j]))))
                 assign(model.Y.names[j],mgcv::gam(make.formula(Y.data,approach=Yform,index=j,fam=model.Y.families[j]),data=Y.data,family=model.Y.families[j],drop.unused.levels=FALSE))    
@@ -299,7 +295,7 @@ boots <- foreach(b = 1:B) %:%
                   if(i.type!="individual"){replacement <- matrix(rep((store.results[i,2:(n.a+1)])[is.na(store.results[i,2:(n.a+1)])==F], nrow(mydat)), nrow=nrow(mydat), byrow=T)}else{
                                            replacement <- abar[[which(sapply(lapply(lapply(abar, colnames), as.numeric), identical, as.vector(unname(unlist(store.results[i,2:(n.a+1)]))))) ]]  }
                                            if(length(all.Anodes)==1){replacement<-as.vector(replacement)}
-                  gdata[,all.Anodes] <-    replacement
+                  gdata[,all.Anodes] <-    replacement ; if(catint==TRUE){for(k in catind){gdata[,k] <- factor(gdata[,k])}}
                   gdata[,all.Cnodes] <-    cbar}
                 # 3
                 sim.nodes <- c(Lnodes,Ynodes); if(i.type=="natural"){sim.nodes <- c(sim.nodes,Anodes,Cnodes)}
@@ -314,9 +310,11 @@ boots <- foreach(b = 1:B) %:%
                 if(sim.family=="binomial"){gdata[,var.order[j]] <- rbinom(n=length(pm),1,prob=pm)}else{
                 if(sim.family=="poisson"){gdata[,var.order[j]]  <- rpois(n=length(pm),lambda=pm)}else{
                 if(substr(sim.family,1,4)=="mult"){if(any(is.na(pm))){pm[is.na(pm)]<-1e08;if(verbose==TRUE){cat("\n Note: multinomial prediction led to missing values which were replaced by '0'")}}
-                                                   gdata[,var.order[j]] <- rmulti(pm)}
+                                                   gdata[,var.order[j]] <- recode_to_factor(rmulti(pm),verb=FALSE)}
                 }}}
                 }
+                if(any(substr(model.families,1,4)=="mult")){ind <- which(substr(model.families,1,4)=="mult")
+                                                            gdata[ind] <- lapply(lapply(gdata[ind],as.character),as.numeric) }
                 if(is.null(Cnodes)==FALSE){gdata <- t(apply(gdata,1,censor,C.index=which(colnames(X)%in%Cnodes)))}
                 if(survivalY==TRUE){gdata <- t(apply(gdata,1,censor,C.index=which(colnames(X)%in%Ynodes)))
                                     gdata<-adjust.sim.surv(gdata,Yn=Ynodes)}
@@ -349,21 +347,22 @@ if(i.type!="natural"){store.results$psi <- c(analysis)}else{
   blocks <- make.interval(which(colnames(X)%in%Ynodes))
   lblocks[i] <- sum(which(colnames(X)%in%Lnodes)%in%blocks[[i]])
   }
-   if(is.wholenumber(length(Lnodes)/length(Ynodes)) | n.t==1){
+   if(n.t==1){
    store.results[store.results$a1=="natural",paste0("L_",1:(length(Lnodes)/n.t))] <- matrix(analysis[,Lnodes],byrow=T,ncol=length(Lnodes)/n.t)
    store.results[store.results$a1=="observed",paste0("L_",1:(length(Lnodes)/n.t))] <- matrix(sapply(subset(X,select=Lnodes),rmean),byrow=T,ncol=length(Lnodes)/n.t)}else{
-      if(length(lblocks)>1 & length(unique(lblocks[-1]))==1){
+      if(length(lblocks)>1 & length(unique(lblocks[-1]))==1 & lblocks[1]==0){
         store.results[store.results$a1=="natural" & store.results$time!=1,paste0("L_",1:max(lblocks))] <- matrix(analysis[,Lnodes],byrow=T,ncol=max(lblocks))
         store.results[store.results$a1=="observed"& store.results$time!=1,paste0("L_",1:max(lblocks))] <- matrix(sapply(subset(X,select=Lnodes),rmean),byrow=T,ncol=max(lblocks))
-        if(verbose==TRUE){cat("Note: it is not entirely clear to which time points your Lnodes belong to. I guessed what could make sense, but please check.\n\n")}
+        if(verbose==TRUE){cat("Note: I assumed that, after the first outcome node, blocks of L's are ordered and refer to the same variables at each time point. \n Please check if this is correct.\n\n")}
         }else{
         if(max(lblocks,na.rm=T)==1){
           updat.index <- unlist(lapply(apply(t(outer(which(colnames(X)%in%Lnodes), which(colnames(X)%in%Ynodes), "<")),1,which),max))
           updt.Lnodes <- analysis[,Lnodes][updat.index]; updt.Lnodes2 <-  sapply(subset(X,select=Lnodes),rmean)[updat.index]
           store.results[store.results$a1=="natural",paste0("L_",1)] <- updt.Lnodes
           store.results[store.results$a1=="observed",paste0("L_",1)] <- updt.Lnodes2
+          if(verbose==TRUE & min(lblocks,na.rm=T)==0){cat("Note: L is not measured at each time interval. Reported results are 'carried forward' as appropriate, and assume that each interval contains the same L.\n\n")}
           }else{
-            if(verbose==TRUE){cat("Note: your number of Lnodes are not a multiple of your number of Ynodes.\n This is fine, but you seem to have more than one Lnode per time point, and maybe unequally distributed. \n It is difficult for me to guess which Lnodes belong 'together', and at which time point. \n Thus, no natural course values for your Lnodes are calculated. \n Use 'ret=TRUE' and calculate manually.\n")}
+            if(verbose==TRUE){cat("Note: you seem to have more than one Lnode per time point, but a different number of L's after each Ynode. \n In this case, no natural course values for your Lnodes are calculated. \n Use 'ret=TRUE' and calculate manually.\n")}
               }}
    }}
   store.results[store.results$a1=="difference",grep("psi",colnames(store.results)):ncol(store.results)] <-
@@ -386,13 +385,13 @@ if(B>0){
   sim.results <- matrix(unlist(analysis.b),ncol=newB,dimnames=list(colnames(analysis.b[[1]]),NULL))
   store.results[store.results$a1=="natural",c("l95","u95")]  <-  t(apply(subset(sim.results,subset=rownames(sim.results)%in%Ynodes),1,quantile,probs=c(0.025,0.975)))
   store.results[store.results$a1=="observed",c("l95","u95")] <-  t(apply(matrix(unlist(lapply(obs.data[-1],lrmean,ind=Ynodes)),ncol=newB),1,quantile,probs=c(0.025,0.975)))
-  store.results[store.results$a1=="difference",c("l95","u95")] <-  t(apply(sim.results[rownames(sim.results)%in%Ynodes,]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Ynodes)),ncol=newB),1,quantile,probs=c(0.025,0.975)))
+  store.results[store.results$a1=="difference",c("l95","u95")] <-  t(apply(sim.results[rownames(sim.results)%in%Ynodes,,drop=F]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Ynodes)),ncol=newB),1,quantile,probs=c(0.025,0.975)))
   if(is.null(Lnodes)==FALSE){
-    if(is.wholenumber(length(Lnodes)/length(Ynodes)) | n.t==1){
+    if(n.t==1){
     store.results[store.results$a1=="natural", paste(paste0("L_",1:(length(Lnodes)/n.t)),"l95",sep=":")] <- 
-    matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,],1,quantile,probs=c(0.025)),ncol=(length(Lnodes)/n.t),byrow=T)
+    matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F],1,quantile,probs=c(0.025)),ncol=(length(Lnodes)/n.t),byrow=T)
     store.results[store.results$a1=="natural", paste(paste0("L_",1:(length(Lnodes)/n.t)),"u95",sep=":")] <- 
-    matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,],1,quantile,probs=c(0.975)),ncol=(length(Lnodes)/n.t),byrow=T)
+    matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F],1,quantile,probs=c(0.975)),ncol=(length(Lnodes)/n.t),byrow=T)
     store.results[store.results$a1=="observed", c(paste(paste0("L_",1:(length(Lnodes)/n.t)),"l95",sep=":"))] <- 
     matrix(t(apply(matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.025))),ncol=(length(Lnodes)/n.t),byrow=TRUE)
     store.results[store.results$a1=="observed", c(paste(paste0("L_",1:(length(Lnodes)/n.t)),"u95",sep=":"))] <- 
@@ -401,15 +400,15 @@ if(B>0){
     for(i in 1:(length(Lnodes)/n.t)){col.order <- c(col.order,sort(grep(paste0("L_",i),colnames(store.results)))) }
     store.results <- store.results[,col.order]
     store.results[store.results$a1=="difference", paste(paste0("L_",1:(length(Lnodes)/n.t)),"l95",sep=":")] <- 
-    matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.025)),ncol=(length(Lnodes)/n.t),byrow=T)
+    matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.025)),ncol=(length(Lnodes)/n.t),byrow=T)
     store.results[store.results$a1=="difference", paste(paste0("L_",1:(length(Lnodes)/n.t)),"u95",sep=":")] <- 
-    matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.975)),ncol=(length(Lnodes)/n.t),byrow=T)
+    matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.975)),ncol=(length(Lnodes)/n.t),byrow=T)
     }else{
-      if(length(lblocks)>1 & length(unique(lblocks[-1]))==1){
+      if(length(lblocks)>1 & length(unique(lblocks[-1]))==1 & lblocks[1]==0){
       store.results[store.results$a1=="natural" & store.results$time!=1, paste(paste0("L_",1:max(lblocks)),"l95",sep=":")] <- 
-      matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,],1,quantile,probs=c(0.025)),ncol=max(lblocks),byrow=T)
+      matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F],1,quantile,probs=c(0.025)),ncol=max(lblocks),byrow=T)
       store.results[store.results$a1=="natural" & store.results$time!=1, paste(paste0("L_",1:max(lblocks)),"u95",sep=":")] <- 
-      matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,],1,quantile,probs=c(0.975)),ncol=max(lblocks),byrow=T)
+      matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F],1,quantile,probs=c(0.975)),ncol=max(lblocks),byrow=T)
       store.results[store.results$a1=="observed" & store.results$time!=1, c(paste(paste0("L_",1:max(lblocks)),"l95",sep=":"))] <- 
       matrix(t(apply(matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.025))),ncol=max(lblocks),byrow=TRUE)
       store.results[store.results$a1=="observed" & store.results$time!=1, c(paste(paste0("L_",1:max(lblocks)),"u95",sep=":"))] <- 
@@ -418,15 +417,15 @@ if(B>0){
       for(i in 1:max(lblocks)){col.order <- c(col.order,sort(grep(paste0("L_",i),colnames(store.results)))) }
       store.results <- store.results[,col.order]
       store.results[store.results$a1=="difference" & store.results$time!=1, paste(paste0("L_",1:max(lblocks)),"l95",sep=":")] <- 
-      matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.025)),ncol=max(lblocks),byrow=T)
+      matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.025)),ncol=max(lblocks),byrow=T)
       store.results[store.results$a1=="difference" & store.results$time!=1, paste(paste0("L_",1:max(lblocks)),"u95",sep=":")] <- 
-      matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.975)),ncol=max(lblocks),byrow=T)
+      matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.975)),ncol=max(lblocks),byrow=T)
         }else{
           if(max(lblocks,na.rm=T)==1){
           store.results[store.results$a1=="natural", paste(paste0("L_",1),"l95",sep=":")] <- 
-          matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,],1,quantile,probs=c(0.025))[updat.index],ncol=1,byrow=T)
+          matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F],1,quantile,probs=c(0.025))[updat.index],ncol=1,byrow=T)
           store.results[store.results$a1=="natural", paste(paste0("L_",1),"u95",sep=":")] <- 
-          matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,],1,quantile,probs=c(0.975))[updat.index],ncol=1,byrow=T)
+          matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F],1,quantile,probs=c(0.975))[updat.index],ncol=1,byrow=T)
           store.results[store.results$a1=="observed", c(paste(paste0("L_",1),"l95",sep=":"))] <- 
           matrix(t(apply(matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.025))),1,byrow=TRUE)[,updat.index]
           store.results[store.results$a1=="observed", c(paste(paste0("L_",1),"u95",sep=":"))] <- 
@@ -435,9 +434,9 @@ if(B>0){
           col.order <- c(col.order,sort(grep(paste0("L_",1),colnames(store.results))))
           store.results <- store.results[,col.order]
           store.results[store.results$a1=="difference", paste(paste0("L_",1),"l95",sep=":")] <- 
-          matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.025)),ncol=1,byrow=T)[updat.index,]
+          matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.025)),ncol=1,byrow=T)[updat.index,]
           store.results[store.results$a1=="difference", paste(paste0("L_",1),"u95",sep=":")] <- 
-          matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.975)),ncol=1,byrow=T)[updat.index,]
+          matrix(apply(sim.results[rownames(sim.results)%in%Lnodes,,drop=F]-matrix(unlist(lapply(obs.data[-1],lrmean,ind=Lnodes)),ncol=newB),1,quantile,probs=c(0.975)),ncol=1,byrow=T)[updat.index,]
       }}
     }
   }}
@@ -461,7 +460,7 @@ res= list(results=store.results,
           diagnostics=diagn, 
           simulated.data=sim.data, observed.data=obs.data,
           setup=list(i.type = i.type, n.t=n.t, B=B, fams=model.families, measure="default",
-          Ynodes = Ynodes, Anodes=Anodes, Lnodes=Lnodes, Cnodes=Cnodes, abar=abar, support=calc.support, survival=survivalY)
+          Ynodes = Ynodes, Anodes=Anodes, Lnodes=Lnodes, Cnodes=Cnodes, abar=abar, support=calc.support, survival=survivalY, catint=catint)
           )
 
 class(res) <- "gformula"

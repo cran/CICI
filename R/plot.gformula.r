@@ -8,13 +8,14 @@ gobject <- x
 msm.method  <- match.arg(msm.method)
 if(msm.method=="none" & is.null(weight)==FALSE){stop("For weighted MSM estimation, `msm.method' cannot be `none'")}
 if(gobject$setup$i.type=="natural"){if(length(unique(gobject$results$time))==1){stop("Natural course scenario for 1 time point can not be plotted. \n  Simply look at the results table.")}}
+if(gobject$setup$i.type=="natural"){if(length(unique(gobject$results$time))==2 & variable!="psi"){stop("Natural course scenario for 2 time points can only be plotted for Ynodes (and not Lnodes).")}}
 if(CI==TRUE & gobject$setup$B==0){CI<-FALSE;cat("No confidence intervals printed because B=0")}
 if(survival==T & gobject$setup$survival==F){survival<-F; cat("Note: survival curves can only displayed for survival setups. Thus survival is set back to FALSE." )}
 if(survival==T & gobject$setup$n.t==1){survival<-F; cat("Note: survival curves can only displayed for >1 time points." )}
 if(survival==T & length(time.points)==1){stop("Survival curves can only displayed for >1 time points." )}
 if(survival==T & msm.method!="none"){cat("Note: no step functions provided. \n  Use msm.method='none' for plot without connecting lines. \n")}
 
-if(all(gobject$setup$abar%in%c(0,1))){bin.int=TRUE}else{bin.int <- FALSE}
+if(all(gobject$setup$abar%in%c(0,1)) | gobject$setup$catint==TRUE){bin.int=TRUE}else{bin.int <- FALSE}
 n.t <- gobject$setup$n.t
 if(bin.int==TRUE & n.t==1){gobject$setup$i.type<-"standard"; msm.method<-"none"}
 if(bin.int==TRUE & n.t>1){gobject$setup$i.type<-"custom"}

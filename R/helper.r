@@ -7,8 +7,7 @@ test.binary       <- function(myvec){if(ncat(myvec)==2){return(TRUE)}else{return
 test.poisson      <- function(myvec){if(ncat(myvec)%in%seq(3,20) & all(is.wholenumber(myvec[is.na(myvec)==F])) & is.numeric(myvec[is.na(myvec)==F])){return(TRUE)}else{return(FALSE)}}
 test.multinomial  <- function(myvec){if(ncat(myvec)%in%seq(3,9)  & is.factor(myvec[is.na(myvec)==F])){return(TRUE)}else{return(FALSE)}}
 is.binary         <- function(myvec){all(myvec[is.na(myvec)==F]%in%c(0,1))}
-#as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
-     
+   
 assign.family     <- function(mymat,specify=NULL){
                                      if(is.null(specify)==TRUE){
                                      bin.ind  <- pois.ind <- mult.ind <- vector(mode = "logical", length = ncol(mymat))
@@ -121,12 +120,7 @@ projection_linear <- function(x,c1=0.1,c2=0.1){
  w <- x; w[x>=c2] <- 1; w[x<c2] <- c1 + ((1-c1)/(c2))*x[x<c2]; w[x==0] <- c1
  return(w)
  }
-# 
-# projection_galga <- function(gal_ga,gal,c1=0.1){
-#   if(c1<0 | c1>1){stop("c1 needs to be in [0, 1]")}
-#   w <- gal_ga; w[gal>=c1] <- 1
-#   return(w)
-# }
+
 
 require.package <- function(package, message = paste("loading required package (", 
     package, ") failed; please install", sep = "")){
@@ -244,6 +238,7 @@ adjust.sim.surv <- function(mat,Yn){  #improve for-loop
 return(mat)
 }
 
+
 multiResultClass <- function(result1=NULL,result2=NULL)
 {
   me <- list(
@@ -273,6 +268,19 @@ if(verb==TRUE){cat(paste(recoding,"\n"))}
 return(as.numeric(vec2))
 }
 
+recode_to_factor <- function(vec, verb = TRUE) {
+  vec <- as.factor(vec)
+  nf <- levels(na.omit(vec))           
+  nums <- 0:(length(nf) - 1)            
+  code <- data.frame(nf = nf, nums = nums)  
+  recoding <- paste(apply(code, 1, function(row) paste(row, collapse = " replaced by ")),
+                    collapse = " ; ")
+  vec2 <- as.numeric(vec) - 1         
+  if(verb){cat(paste(recoding, "\n")) }
+  return(factor(vec2, levels = nums))   
+}
+
+
 binary.to.zeroone<-function(vec,verb){nf <- unique(na.omit(vec))
 nums <- c(0,1)
 code <- data.frame(nf,nums)
@@ -282,6 +290,7 @@ for(i in 1:length(nums)){vec2[vec==code$nf[i]]<-code$nums[i]}
 if(verb==TRUE){cat(paste(recoding,"\n"))}
 return(vec2)
 }
+
 right.coding<-function(vec){
 uv <- unique(na.omit(vec))
 pc <- factor(0:(length(uv)-1))
