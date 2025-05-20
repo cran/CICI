@@ -7,9 +7,8 @@ Plot dose-response curves
 \usage{
 \method{plot}{gformula}(x, msm.method = c("line","loess", "gam", "none"), 
                         CI = FALSE, time.points = NULL, 
-                        cols = NULL, weight = NULL,
-                        survival = FALSE,variable = "psi", difference = FALSE,
-                        ...)
+                        cols = NULL, weight = NULL, xaxis=NULL,
+                        variable = "psi", difference = FALSE, ...)
 }
 \arguments{
   \item{x}{
@@ -29,9 +28,8 @@ A vector of strings specifying custom colours for each drawn curve.
   \item{weight}{
 Weight vector of size "number of interventions times time points", that is used for the MSM if \code{msm.method="loess"} or \code{msm.method="gam"}.
 }
-  \item{survival}{
-Logical. If TRUE, time refers to the x-axis (under the condition that it is indeed a survival setting).
-}
+\item{xaxis}{Either NULL or a string. If set to "time", then the x-axis is forced to represent time (unless this is impossible)}
+
   \item{variable}{
 A string specifying the variable to be plotted under the natural course scenario (i.e., if \code{abar"natural"} and \code{cbar="natural"} in the respective \code{gformula} object). 
 }

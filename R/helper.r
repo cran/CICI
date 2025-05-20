@@ -23,12 +23,15 @@ assign.family     <- function(mymat,specify=NULL){
                                      return(fam)
 }
 
-make.formula <- function(dat,approach,index,fam){
+make.formula <- function(dat,approach,index,fam,surv=F,survnodes=NULL){
     if(approach[1]%in%c("GLM","GAM")){
     outc <- colnames(dat)[length(colnames(dat))]
     dat2 <- subset(dat,select=-length(colnames(dat)))
+    if(surv==TRUE){
+      dat2 <- dat2[,!(names(dat2) %in% survnodes),drop=F]
+    }
     if(length(colnames(dat))==1){covar <- "1"}else{
-      if(approach=="GLM"){covar <- paste(colnames(dat)[-length(colnames(dat))],collapse="+")}
+      if(approach=="GLM"){covar <- paste(colnames(dat2),collapse="+")}
       if(approach=="GAM"){
         cts.x <- apply(dat2, 2, function(x) (length(unique(x)) > 10))
         if(sum(!cts.x) > 0 & sum(cts.x) > 0){
@@ -224,7 +227,7 @@ censor <- function(vec,C.index){
 adjust.sim.surv <- function(mat,Yn){  #improve for-loop
   mymin <- function(vec){if(length(vec)>0){return(min(vec))}else{return(NA)}}
   find.first <- function(vec){mymin(which(vec==1))}
-  first.event <- apply(mat[,Yn],1,find.first)
+  first.event <- apply(mat[,Yn,drop=F],1,find.first)
   censor.at <- Yn[first.event]
   position <- rep(NA,nrow(mat))
   for(i in 1:nrow(mat)){if(length(which(censor.at[i]==colnames(mat)))>0){position[i]<-which(censor.at[i]==colnames(mat))}}

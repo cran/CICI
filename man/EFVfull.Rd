@@ -5,7 +5,7 @@
 Pharmacoepidemiological HIV treatment data
 }
 \description{
-A hypothetical, simulated dataset which is line with the data-generating process of Schomaker et al. (2023) and inspired by the data of Bienczak et al. (2017); see references below. Compared to the dataset \code{EFV}, it contains all variables of the DAG in Figure 3 of Schomaker et al. (2023), also those which are not needed for identification of the counterfactual quantity of interest; that is, the expected viral suppression (\code{VL}) under a specific intervention on efavirenz concentrations (\code{efv.0, efv.1, ...}).
+A hypothetical, simulated dataset which is line with the data-generating process of Schomaker et al. (2024) and inspired by the data of Bienczak et al. (2017); see references below. Compared to the dataset \code{EFV}, it contains all variables of the DAG in Figure 3 of Schomaker et al. (2023), also those which are not needed for identification of the counterfactual quantity of interest; that is, the expected viral suppression (\code{VL}) under a specific intervention on efavirenz concentrations (\code{efv.0, efv.1, ...}).
 }
 \usage{data(EFVfull)}
 \format{
@@ -50,7 +50,7 @@ abacavir, stavudine or zidovudine.}
 }
 
 \references{
-Schomaker M, McIlleron H, Denti P, Diaz I. (2023) \emph{Causal Inference for Continuous Multiple Time Point Interventions}, ArXiv e-prints: \emph{https://arxiv.org/abs/2305.06645}.
+Schomaker M, McIlleron H, Denti P, Diaz I. (2024) \emph{Causal Inference for Continuous Multiple Time Point Interventions}, Statistics in Medicine, 43:5380-5400, see also \emph{https://arxiv.org/abs/2305.06645}.
 
 Bienczak et al. (2017) \emph{Determinants of virological outcome and adverse events in African children treated with paediatric nevirapine fixed-dose-combination tablets}, AIDS, \emph{31:905-915}
 }

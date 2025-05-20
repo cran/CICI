@@ -26,7 +26,7 @@ Logical. TRUE if notes should be printed.
 other parameters to be passed to \code{fun}
 }
 }
-\details{In settings with censoring, it will often be needed to pass on the option \code{na.rm=T}, e.g. for the mean, median, quantilesn, and others. 
+\details{In settings with censoring, it will often be needed to pass on the option \code{na.rm=T}, e.g. for the mean, median, quantiles, and others. 
 
 Calculation of the bootstrap standard error (i.e., \code{with.se}=T) is typically not needed; but, for example, necessary for the calculations after multiple imputation and hence used by \code{\link{mi.boot}}.
 }

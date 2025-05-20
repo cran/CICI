@@ -16,8 +16,8 @@ The main function of the package is currently \code{\link{gformula}}.
 \tabular{ll}{
 Package: \tab CICI\cr
 Type: \tab Package\cr
-Version: \tab 0.9.4\cr
-Date: \tab 2024-12-10\cr
+Version: \tab 0.9.5\cr
+Date: \tab 2025-05-15\cr
 License: \tab GPL-2\cr
 Depends: \tab R (>= 4.0)\cr
 Imports: \tab mgcv, glmnet, ggplot2, parallel, doParallel, foreach, doRNG, rngtools\cr
@@ -31,5 +31,5 @@ Maintainer: Michael Schomaker <michael.schomaker@stat.uni-muenchen.de>
 }
 
 \references{
-Schomaker M, McIlleron H, Denti P, Diaz I. (2024) \emph{Causal Inference for Continuous Multiple Time Point Interventions}, Statistics in Medicine, in press, see also \emph{https://arxiv.org/abs/2305.06645}.
+Schomaker M, McIlleron H, Denti P, Diaz I. (2024) \emph{Causal Inference for Continuous Multiple Time Point Interventions}, Statistics in Medicine, 43:5380-5400, see also \emph{https://arxiv.org/abs/2305.06645}.
 }

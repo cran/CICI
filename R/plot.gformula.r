@@ -1,7 +1,7 @@
 plot.gformula <- function(x, msm.method=c("line","loess","gam","none"),
                              CI=FALSE, time.points=NULL,
-                             cols=NULL, weight=NULL, survival=FALSE,
-                             variable="psi", difference=FALSE, ...){
+                             cols=NULL, weight=NULL, xaxis=NULL,
+                             variable="psi", difference=FALSE,  ...){
 
 a1<-psi<-l95<-u95<-relvar<-Strategy<-sel.l95<-sel.u95<-NULL
 gobject <- x
@@ -10,10 +10,6 @@ if(msm.method=="none" & is.null(weight)==FALSE){stop("For weighted MSM estimatio
 if(gobject$setup$i.type=="natural"){if(length(unique(gobject$results$time))==1){stop("Natural course scenario for 1 time point can not be plotted. \n  Simply look at the results table.")}}
 if(gobject$setup$i.type=="natural"){if(length(unique(gobject$results$time))==2 & variable!="psi"){stop("Natural course scenario for 2 time points can only be plotted for Ynodes (and not Lnodes).")}}
 if(CI==TRUE & gobject$setup$B==0){CI<-FALSE;cat("No confidence intervals printed because B=0")}
-if(survival==T & gobject$setup$survival==F){survival<-F; cat("Note: survival curves can only displayed for survival setups. Thus survival is set back to FALSE." )}
-if(survival==T & gobject$setup$n.t==1){survival<-F; cat("Note: survival curves can only displayed for >1 time points." )}
-if(survival==T & length(time.points)==1){stop("Survival curves can only displayed for >1 time points." )}
-if(survival==T & msm.method!="none"){cat("Note: no step functions provided. \n  Use msm.method='none' for plot without connecting lines. \n")}
 
 if(all(gobject$setup$abar%in%c(0,1)) | gobject$setup$catint==TRUE){bin.int=TRUE}else{bin.int <- FALSE}
 n.t <- gobject$setup$n.t
@@ -23,7 +19,8 @@ if(gobject$setup$i.type=="individual"){
   custom <- any(unlist(lapply(lapply(apply(gobject$results[, grep("^a", names(gobject$results)), drop=F],1,unique),na.omit),length))>1 )
   if(custom==TRUE){gobject$setup$i.type<-"custom"}else{gobject$setup$i.type<-"standard"}
   }
-if(survival==T){gobject$setup$i.type<-"custom"}
+if(is.null(xaxis)==FALSE){if(xaxis=="time" & gobject$setup$i.type!="natural" & gobject$setup$n.t>1){gobject$setup$i.type<-"custom"}}  
+if(gobject$setup$i.type=="natural" & variable!="psi"){if(!(variable %in% colnames(gobject$results))){stop("You selected a 'variable' that is not part of the results table.")}}
   
 results <- gobject$results
 if(is.null(time.points)==FALSE){results<-results[results$time%in%time.points,]}

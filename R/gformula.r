@@ -1,9 +1,10 @@
 ###
-# 0) Update references
-# 1) should last variable be a Ynode?
-# 2) plor.gformula -> L_1 not allowed if not there
-# 3) binary and categorical intervention: function to calculate differences, risks etc. (combine with compete()?)
+# 0) Wrapper function: as.character/as.numeric
+# 1) xaxis=time / survival with natural intervention
+# Check -> Note: you chose custom interventions. 
+# 'custom.measure' asssumes that the intervention values at the first time point (time=1) are not identical.
 # 4) maybe test mixed interventions?
+# 5) contrast(values=c(0,1), fun="ratio") function -> maybe using custom.estimand?
 # 7) natural bounds 
 # 8) shift 
 # 9) SACE ; and competing() and revisit definitions of cbar
@@ -51,15 +52,18 @@ if(is.character(Yform)==FALSE){stop("Yform needs to be a character vector")}
 if(is.character(Cform)==FALSE){stop("Cform needs to be a character vector")}
 if(is.character(Lform)==FALSE){stop("Lform needs to be a character vector")}
 if(is.character(Aform)==FALSE){stop("Aform needs to be a character vector")}
-if(!Yform[1]%in%c("GLM","GAM") & length(Yform)!=length(Ynodes)){stop(paste("You have provided",length(Yform),"model formula(s); but there are",length(Ynodes),"Ynodes"))}
-if(!Lform[1]%in%c("GLM","GAM") & length(Lform)!=length(Lnodes)){stop(paste("You have provided",length(Lform),"model formula(s); but there are",length(Lnodes),"Lnodes"))}
-if(!Aform[1]%in%c("GLM","GAM") & length(Aform)!=length(Anodes)){stop(paste("You have provided",length(Aform),"model formula(s); but there are",length(Anodes),"Anodes"))}
-if(!Cform[1]%in%c("GLM","GAM") & length(Cform)!=length(Cnodes)){stop(paste("You have provided",length(Cform),"model formula(s); but there are",length(Cnodes),"Cnodes"))}
+if(!Yform[1]%in%c("GLM","GAM") & length(Yform)!=length(Ynodes)){stop(paste("You have provided",length(Yform),"model formula(e); but there are",length(Ynodes),"Ynodes"))}
+if(!Lform[1]%in%c("GLM","GAM") & length(Lform)!=length(Lnodes)){stop(paste("You have provided",length(Lform),"model formula(e); but there are",length(Lnodes),"Lnodes"))}
+if(!Aform[1]%in%c("GLM","GAM") & length(Aform)!=length(Anodes)){stop(paste("You have provided",length(Aform),"model formula(e); but there are",length(Anodes),"Anodes"))}
+if(!Cform[1]%in%c("GLM","GAM") & length(Cform)!=length(Cnodes)){stop(paste("You have provided",length(Cform),"model formula(e); but there are",length(Cnodes),"Cnodes"))}
 if(any(cbar!="uncensored") & any(cbar!="natural") & survivalY==TRUE){stop("custom cbar interventions for survival data currently not supported")} #check again 
 if(is.logical(ret)==FALSE){stop("'ret' needs to either TRUE or FALSE")}
 if(is.logical(verbose)==FALSE){stop("'verbose' needs to either TRUE or FALSE")}
 if(is.numeric(ncores)==FALSE){stop("'ncores' needs to be numeric")}
 if(is.character(prog)==FALSE & is.null(prog)==FALSE){stop("'prog' needs to be a character vector")}
+if(any(is.na(X[,1])) & verbose==TRUE ){cat("Warning: Your first variable in the data has missing values. Are you sure your setup is correct?")}
+if(colnames(X)[1] %in% c(Ynodes,Cnodes) & verbose==TRUE){stop("The first variable in the data can not be a Y- or Cnode.")}
+if(!(rev(colnames(X))[1] %in% Ynodes) & verbose==TRUE){cat("Note: your last variable in the data is not a Ynode, which is unusual.")}
 
 if(any(model.families=="binomial")){bin.problem <- !sapply(subset(X,select=(model.families=="binomial")), is.binary)
     if(any(bin.problem)){if(verbose==TRUE){cat(paste("Binary variables have been recoded:",paste(names(bin.problem)[bin.problem],collapse=","),"\n"))}
@@ -154,15 +158,19 @@ model.L.families <- model.families[colnames(mydat)%in%c(Lnodes)]
 model.Y.families <- model.families[colnames(mydat)%in%c(Ynodes)]
 n.L.models <-  sum(colnames(mydat)%in%c(Lnodes))
 n.Y.models <-  sum(colnames(mydat)%in%c(Ynodes))
+surv <- survivalY==T |(survivalY==F & is.null(Cnodes)==F); snodes<-NULL
+if(surv==TRUE){if(survivalY==F & is.null(Cnodes)==F){snodes<-Cnodes}else{snodes<-c(Ynodes,Cnodes)}}
 
 # Step 1: fit models
+if(is.null(Lnodes)==FALSE){
 for(j in 1:n.L.models)try({
 L.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.L.Ynodes[j]))))
-assign(model.L.names[j],mgcv::gam(make.formula(L.data,approach=Lform,index=j,fam=model.L.families[j]),data=L.data,family=model.L.families[j]))   
-},silent=TRUE)   
+assign(model.L.names[j],mgcv::gam(make.formula(L.data,approach=Lform,index=j,fam=model.L.families[j],surv=surv,survnodes=snodes),data=L.data,family=model.L.families[j]))   
+},silent=TRUE)
+}
 for(j in 1:n.Y.models)try({
 Y.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.Y.Ynodes[j]))))
-assign(model.Y.names[j],mgcv::gam(make.formula(Y.data,approach=Yform,index=j,fam=model.Y.families[j]),data=Y.data,family=model.Y.families[j]))    
+assign(model.Y.names[j],mgcv::gam(make.formula(Y.data,approach=Yform,index=j,fam=model.Y.families[j],surv=surv,survnodes=snodes),data=Y.data,family=model.Y.families[j]))    
 },silent=TRUE)
 
 if(i.type=="natural"){
@@ -172,7 +180,7 @@ if(i.type=="natural"){
   n.A.models <-  sum(colnames(mydat)%in%c(Anodes))
     for(j in 1:n.A.models)try({
     A.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.A.Ynodes[j]))))
-    assign(model.A.names[j],mgcv::gam(make.formula(A.data,approach=Aform,index=j,fam=model.A.families[j]),data=A.data,family=model.A.families[j]))   
+    assign(model.A.names[j],mgcv::gam(make.formula(A.data,approach=Aform,index=j,fam=model.A.families[j],surv=surv,survnodes=snodes),data=A.data,family=model.A.families[j]))   
     },silent=TRUE)
  if(is.null(Cnodes)==FALSE){
   model.C.names  <- paste("m",i,"_",colnames(mydat)[colnames(mydat)%in%c(Cnodes)],sep="")
@@ -181,7 +189,7 @@ if(i.type=="natural"){
   n.C.models <-  sum(colnames(mydat)%in%c(Cnodes))
     for(j in 1:n.C.models)try({
     C.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.C.Ynodes[j]))))
-    assign(model.C.names[j],mgcv::gam(make.formula(C.data,approach=Cform,index=j,fam=model.C.families[j]),data=C.data,family=model.C.families[j]))   
+    assign(model.C.names[j],mgcv::gam(make.formula(C.data,approach=Cform,index=j,fam=model.C.families[j],surv=surv,survnodes=snodes),data=C.data,family=model.C.families[j]))   
     },silent=TRUE)
  }}
 
@@ -257,14 +265,16 @@ boots <- foreach(b = 1:B) %:%
                 model.Y.families <- model.families[colnames(mydat)%in%c(Ynodes)]
                 n.L.models <-  sum(colnames(mydat)%in%c(Lnodes))
                 n.Y.models <-  sum(colnames(mydat)%in%c(Ynodes))
+                surv <- survivalY==T |(survivalY==F & is.null(Cnodes)==F); snodes<-NULL
+                if(surv==TRUE){if(survivalY==F & is.null(Cnodes)==F){snodes<-Cnodes}else{snodes<-c(Ynodes,Cnodes)}}
                 # 1
                 for(j in 1:n.L.models)try({
                 L.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.L.Ynodes[j]))))
-                assign(model.L.names[j],mgcv::gam(make.formula(L.data,approach=Lform,index=j,fam=model.L.families[j]),data=L.data,family=model.L.families[j],drop.unused.levels=FALSE))   
+                assign(model.L.names[j],mgcv::gam(make.formula(L.data,approach=Lform,index=j,fam=model.L.families[j],surv=surv,survnodes=snodes),data=L.data,family=model.L.families[j],drop.unused.levels=FALSE))   
                 },silent=TRUE)  
                 for(j in 1:n.Y.models)try({
                 Y.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.Y.Ynodes[j]))))
-                assign(model.Y.names[j],mgcv::gam(make.formula(Y.data,approach=Yform,index=j,fam=model.Y.families[j]),data=Y.data,family=model.Y.families[j],drop.unused.levels=FALSE))    
+                assign(model.Y.names[j],mgcv::gam(make.formula(Y.data,approach=Yform,index=j,fam=model.Y.families[j],surv=surv,survnodes=snodes),data=Y.data,family=model.Y.families[j],drop.unused.levels=FALSE))    
                 },silent=TRUE)
                 if(i.type=="natural"){
                 model.A.names  <- paste("m",i,"_",colnames(mydat)[colnames(mydat)%in%c(Anodes)],sep="")
@@ -273,7 +283,7 @@ boots <- foreach(b = 1:B) %:%
                 n.A.models <-  sum(colnames(mydat)%in%c(Anodes))
                 for(j in 1:n.A.models)try({
                 A.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.A.Ynodes[j]))))
-                assign(model.A.names[j],mgcv::gam(make.formula(A.data,approach=Aform,index=j,fam=model.A.families[j]),data=A.data,family=model.A.families[j],drop.unused.levels=FALSE))   
+                assign(model.A.names[j],mgcv::gam(make.formula(A.data,approach=Aform,index=j,fam=model.A.families[j],surv=surv,survnodes=snodes),data=A.data,family=model.A.families[j],drop.unused.levels=FALSE))   
                 },silent=TRUE)
                 if(is.null(Cnodes)==FALSE){
                 model.C.names  <- paste("m",i,"_",colnames(mydat)[colnames(mydat)%in%c(Cnodes)],sep="")
@@ -282,7 +292,7 @@ boots <- foreach(b = 1:B) %:%
                 n.C.models <-  sum(colnames(mydat)%in%c(Cnodes))
                 for(j in 1:n.C.models)try({
                 C.data <- data.frame(subset(mydat,select=c(1:which(colnames(mydat)%in%model.C.Ynodes[j]))))
-                assign(model.C.names[j],mgcv::gam(make.formula(C.data,approach=Cform,index=j,fam=model.C.families[j]),data=C.data,family=model.C.families[j],drop.unused.levels=FALSE))   
+                assign(model.C.names[j],mgcv::gam(make.formula(C.data,approach=Cform,index=j,fam=model.C.families[j],surv=surv,survnodes=snodes),data=C.data,family=model.C.families[j],drop.unused.levels=FALSE))   
                 },silent=TRUE)
                 }}
                 # 2

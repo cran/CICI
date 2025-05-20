@@ -5,7 +5,7 @@
 Pharmacoepidemiological HIV treatment data
 }
 \description{
-A hypothetical, simulated dataset which is line with the data-generating process of Schomaker et al. (2023) and inspired by the data of Bienczak et al. (2017); see references below.
+A hypothetical, simulated dataset which is line with the data-generating process of Schomaker et al. (2024) and inspired by the data of Bienczak et al. (2017); see references below.
 }
 \usage{data(EFV)}
 \format{
@@ -40,7 +40,7 @@ abacavir, stavudine or zidovudine.}
 }
 
 \references{
-Schomaker M, McIlleron H, Denti P, Diaz I. (2023) \emph{Causal Inference for Continuous Multiple Time Point Interventions}, ArXiv e-prints: \emph{https://arxiv.org/abs/2305.06645}.
+Schomaker M, McIlleron H, Denti P, Diaz I. (2024) \emph{Causal Inference for Continuous Multiple Time Point Interventions}, Statistics in Medicine, 43:5380-5400, see also \emph{https://arxiv.org/abs/2305.06645}.
 
 Bienczak et al. (2017) \emph{Determinants of virological outcome and adverse events in African children treated with paediatric nevirapine fixed-dose-combination tablets}, AIDS, \emph{31:905-915}
 }

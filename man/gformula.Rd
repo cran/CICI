@@ -85,15 +85,15 @@ If \code{abar} is a vector, then each vector component is used as the interventi
 
 The fitted outcome and confounder models are based on generalized additive models (GAMs) as implemented in the \code{mgcv} package. Model families are picked automatically and reported in the output if \code{verbose=TRUE} (see manual for modifications, though they hardly ever make sense). The model formulas are standard GLMs or GAMs (with penalized splines for continuous covariates), conditional on the past, unless specific formulae are given. It is recommended to use customized formulae to reduce the risk of model mis-specification and to ensure that the models make sense (e.g., not too many splines are used when this is computationally not meaningful). This can be best facilitated by using objects generated through \code{\link{make.model.formulas}}, followed by \code{\link{model.formulas.update}} and/or \code{\link{model.update}} (see examples for those functions). 
 
-For survival settings, it is required that i) \code{survivalY=TRUE}, ii) the data are in a format where a Ynode stays 1, after it jumps to 1 and ii) after a Cnode/Ynode is 1, every variable thereafter is set to \code{NA} (except a Ynode which is already 1). See manual for an example. By default, the package intervenes on Cnodes, i.e. calculates counterfactual outcomes under no censoring. 
+For survival settings, it is required that i) \code{survivalY=TRUE} and ii) after a Cnode/Ynode is 1, every variable thereafter is set to \code{NA}. See manual for an example. By default, the package intervenes on Cnodes, i.e. calculates counterfactual outcomes under no censoring. 
 
-If \code{calc.support=TRUE}, conditional and crude support measures (i.e., diagnostics) are calculated as described in Section 3.3.2 of Schomaker et al. (2023). Another useful diagnostic for multiple time points is the natural course scenario, which can be evaluated under \code{abar='natural'} and \code{cbar='natural'}.
+If \code{calc.support=TRUE}, conditional and crude support measures (i.e., diagnostics) are calculated as described in Section 3.4 of Schomaker et al. (2023). Another useful diagnostic for multiple time points is the natural course scenario, which can be evaluated under \code{abar='natural'} and \code{cbar='natural'}.
 
-To parallelize computations automatically, it is sufficient to set \code{ncores>1}, as appropriate. No further customization or setup is needed, everything will be done by the package. To make estimates under parallelization reproducible, use the \code{seed} argument. To watch the progress of parallelized computations, set a path in the \code{prog} argument: then, a text file reports on the progress, which is particularly useful if lengthy bootstrapping computations are required.
+To parallelize computations automatically, it is sufficient to set \code{ncores>1}, as appropriate. To make estimates under parallelization reproducible, use the \code{seed} argument. To watch the progress of parallelized computations, set a path in the \code{prog} argument: then, a text file reports on the progress, which is particularly useful if lengthy bootstrapping computations are required.
 }
 \value{
 Returns an object of of \code{class} `gformula':
-  \item{results}{matrix of results}
+  \item{results}{data.frame of results. That is, the estimated counterfactual outcomes depending on the chosen intervention strategies, and time points.}
   \item{diagnostics}{list of diagnostics and weights based on the estimated support (if \code{calc.support=TRUE})}
   \item{simulated.data}{list of counterfactual data sets related to the interventions defined through option \code{abar} (and \code{cbar}). Will be \code{NULL} is \code{ret=FALSE}.}
   \item{observed.data}{list of observed data (and bootstrapped observed data). Will be \code{NULL} is \code{ret=FALSE}.}
