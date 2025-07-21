@@ -58,7 +58,7 @@ mi.boot <- function(x,fun,cond=NULL,pooled=FALSE,...){
     mi.table$l95[mi.table$a1=="observed"] <- mi.results2[1,colnames(mi.results)%in%x[[1]]$setup$Ynodes]
     mi.table$u95[mi.table$a1=="observed"] <- mi.results2[2,colnames(mi.results)%in%x[[1]]$setup$Ynodes]
     mi.table$l95[mi.table$a1=="difference"] <- mi.results3[1,colnames(mi.results)%in%x[[1]]$setup$Ynodes]
-    mi.table$u95[mi.table$a1=="diffreence"] <- mi.results3[2,colnames(mi.results)%in%x[[1]]$setup$Ynodes]
+    mi.table$u95[mi.table$a1=="difference"] <- mi.results3[2,colnames(mi.results)%in%x[[1]]$setup$Ynodes]
         if(is.null(x[[1]]$setup$Lnodes)==FALSE){
         res.index <- grep(":l95",colnames(x[[1]]$results)); res.index2 <-  grep(":u95",colnames(x[[1]]$results))
         mi.table[,c(res.index,res.index2)]<-NA

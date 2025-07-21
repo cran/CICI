@@ -1,7 +1,6 @@
 ###
 # 0) Wrapper function: as.character/as.numeric
-# 1) xaxis=time / survival with natural intervention
-# Check -> Note: you chose custom interventions. 
+# 1) Check -> Note: you chose custom interventions. 
 # 'custom.measure' asssumes that the intervention values at the first time point (time=1) are not identical.
 # 4) maybe test mixed interventions?
 # 5) contrast(values=c(0,1), fun="ratio") function -> maybe using custom.estimand?
@@ -18,7 +17,7 @@ gformula <- function(X, Anodes, Ynodes, Lnodes = NULL, Cnodes = NULL,
 
 ### checks and setup ###
 if(is.null(prog)==FALSE){write(matrix("started with setup..."),file=paste(prog,"/progress.txt",sep=""))}
-model.families <- assign.family(X)
+model.families <- assign.family(X, ...)
 
 #
 if(is.null(seed)==FALSE){set.seed(seed)}
@@ -53,7 +52,7 @@ if(is.character(Cform)==FALSE){stop("Cform needs to be a character vector")}
 if(is.character(Lform)==FALSE){stop("Lform needs to be a character vector")}
 if(is.character(Aform)==FALSE){stop("Aform needs to be a character vector")}
 if(!Yform[1]%in%c("GLM","GAM") & length(Yform)!=length(Ynodes)){stop(paste("You have provided",length(Yform),"model formula(e); but there are",length(Ynodes),"Ynodes"))}
-if(!Lform[1]%in%c("GLM","GAM") & length(Lform)!=length(Lnodes)){stop(paste("You have provided",length(Lform),"model formula(e); but there are",length(Lnodes),"Lnodes"))}
+if(!Lform[1]%in%c("GLM","GAM") & length(Lform)!=length(Lnodes)){stop(paste("You have provided",length(Lform),"model formula(e); but there are",length(Lnodes),"Lnodes (Pre-intervention variables are not Lnodes!)"))}
 if(!Aform[1]%in%c("GLM","GAM") & length(Aform)!=length(Anodes)){stop(paste("You have provided",length(Aform),"model formula(e); but there are",length(Anodes),"Anodes"))}
 if(!Cform[1]%in%c("GLM","GAM") & length(Cform)!=length(Cnodes)){stop(paste("You have provided",length(Cform),"model formula(e); but there are",length(Cnodes),"Cnodes"))}
 if(any(cbar!="uncensored") & any(cbar!="natural") & survivalY==TRUE){stop("custom cbar interventions for survival data currently not supported")} #check again 
@@ -330,7 +329,7 @@ boots <- foreach(b = 1:B) %:%
                                     gdata<-adjust.sim.surv(gdata,Yn=Ynodes)}
                 # 4
                 if(i.type!="natural"){res.nodes<-c(Ynodes)}else{res.nodes<-c(Ynodes,Lnodes)}
-                results1  <- apply(subset(gdata,select=colnames(mydat)%in%res.nodes),2,mean,na.rm=TRUE) 
+                results1  <- apply(subset(gdata,select=colnames(mydat)%in%res.nodes),2,mean,na.rm=TRUE)
                 # 
                 results2 <- gdata
                 results3 <- mydat

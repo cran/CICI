@@ -8,8 +8,8 @@ test.poisson      <- function(myvec){if(ncat(myvec)%in%seq(3,20) & all(is.wholen
 test.multinomial  <- function(myvec){if(ncat(myvec)%in%seq(3,9)  & is.factor(myvec[is.na(myvec)==F])){return(TRUE)}else{return(FALSE)}}
 is.binary         <- function(myvec){all(myvec[is.na(myvec)==F]%in%c(0,1))}
    
-assign.family     <- function(mymat,specify=NULL){
-                                     if(is.null(specify)==TRUE){
+assign.family     <- function(mymat,families=NULL){
+                                     if(is.null(families)==TRUE){
                                      bin.ind  <- pois.ind <- mult.ind <- vector(mode = "logical", length = ncol(mymat))
                                      ncat.mat <- apply(mymat,2,ncat)
                                      for(i in 1:ncol(mymat)){bin.ind[i]  <- test.binary(mymat[,i])
@@ -19,7 +19,7 @@ assign.family     <- function(mymat,specify=NULL){
                                      fam[bin.ind]  <-  "binomial"
                                      fam[pois.ind] <-  "poisson"
                                      fam[mult.ind] <-  paste0("multinom(K=",ncat.mat[mult.ind]-1,")")
-                                     }else{fam<-specify}
+                                     }else{fam<-families}
                                      return(fam)
 }
 
@@ -392,11 +392,11 @@ correct.models <- list(
         "VL.3 ~ I(sqrt(efv.3)) + comorbidity.2",
         "VL.4 ~ I(sqrt(efv.4)) + comorbidity.3"
   )
-) 
+)
 
-
-
-
-
-    
-
+excessRelativeRisk <- function(k, l){(l - k) / k}
+numberNeededToTreat <- function(k, l){1 / (l - k)}
+relativeRiskReduction <- function(k, l){(k - l) / k}
+survivalRatio <- function(k, l){(1 - l) / (1 - k)}
+relativeSusceptibility <- function(k, l){(l - k) / (1 - k)}
+exposureAttributableFraction <- function(k, l){(l - k) / l}

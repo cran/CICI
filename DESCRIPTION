@@ -2,9 +2,9 @@ Package: CICI
 Type: Package
 Title: Causal Inference with Continuous (Multiple Time Point)
         Interventions
-Version: 0.9.5
-Date: 2025-05-15
-Authors@R: person("Michael", "Schomaker", email = "michael.schomaker@stat.uni-muenchen.de", role = c("aut", "cre"))
+Version: 0.9.6
+Date: 2025-07-21
+Authors@R: c(person("Michael", "Schomaker", email = "michael.schomaker@stat.uni-muenchen.de", role = c("aut", "cre")), person("Leo", "Fuhrhop", email = "L.Fuhrhop@campus.lmu.de", role = "ctb"))
 Maintainer: Michael Schomaker <michael.schomaker@stat.uni-muenchen.de>
 Description: Estimation of counterfactual outcomes for multiple values of continuous interventions at different time points, and plotting of causal dose-response curves. Details are given in Schomaker, McIlleron, Denti, Diaz (2024) <doi:10.48550/arXiv.2305.06645>.
 Depends: R (>= 4.0)
@@ -12,7 +12,8 @@ Imports: mgcv, glmnet, ggplot2, parallel, doParallel, foreach, doRNG,
         rngtools
 License: GPL-2
 NeedsCompilation: no
-Packaged: 2025-05-20 10:42:49 UTC; ua341au
-Author: Michael Schomaker [aut, cre]
+Packaged: 2025-07-21 11:28:38 UTC; ua341au
+Author: Michael Schomaker [aut, cre],
+  Leo Fuhrhop [ctb]
 Repository: CRAN
-Date/Publication: 2025-05-20 11:00:09 UTC
+Date/Publication: 2025-07-21 12:00:02 UTC

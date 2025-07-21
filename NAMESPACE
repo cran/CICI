@@ -1,6 +1,7 @@
-export(gformula,custom.measure,fit.updated.formulas,mi.boot,model.update,make.model.formulas,model.formulas.update,print.gformula,plot.gformula, prop)
+export(gformula,custom.measure,fit.updated.formulas,mi.boot,model.update,make.model.formulas,model.formulas.update,print.gformula,plot.gformula,prop,contrast,print.contrastResult)
 S3method(print,gformula)
 S3method(plot,gformula)
+S3method(print, contrastResult)
 importFrom(glmnet, cv.glmnet)
 importFrom(glmnet, coef.glmnet)
 importFrom(parallel, detectCores)

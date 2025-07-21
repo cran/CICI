@@ -16,8 +16,8 @@ The main function of the package is currently \code{\link{gformula}}.
 \tabular{ll}{
 Package: \tab CICI\cr
 Type: \tab Package\cr
-Version: \tab 0.9.5\cr
-Date: \tab 2025-05-15\cr
+Version: \tab 0.9.6\cr
+Date: \tab 2025-07-21\cr
 License: \tab GPL-2\cr
 Depends: \tab R (>= 4.0)\cr
 Imports: \tab mgcv, glmnet, ggplot2, parallel, doParallel, foreach, doRNG, rngtools\cr

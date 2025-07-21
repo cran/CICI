@@ -109,7 +109,7 @@ Michael Schomaker
 \code{\link{plot.gformula}} for plotting results as (causal) dose response curves, \code{\link{custom.measure}} for evaluating custom estimands and \code{\link{mi.boot}} for using \code{\link{gformula}} on multiply imputed data.}
 
 \examples{
-\donttest{
+\dontrun{
 data(EFV)
 est <- gformula(X=EFV,
                       Lnodes  = c("adherence.1","weight.1",
